@@ -1,13 +1,37 @@
-<?php
+<?
 
 /*
-   PHP base by Greco395
+   PHP baseCode by Greco395 ( http://kinguser.me )
 */
 
 session_start();
 session_name("secure");
 
-require_once("settings.php");
+$settings = [
+	
+  /* 
+      --> EDIT THESE SETTINGS TO WORK <--
+  */
+	
+  // DATABASE CONNECTION
+  "db_host" => "your_value",
+  "db_name" => "your_value",
+  "db_user" => "your_value",
+  "db_pass" => "your_value",
+  // GOOGLE CAPTCHA SETTINGS
+  "g_captcha_public_key" => "your_value",
+  "g_captcha_private_key" => "your_value",
+  // INSERT A RANDOM KEY TO ENCRYPT THE PASSWORD
+  "psw_ecrypt_key" => "your_value",
+  // INSERT THE NAME OF THE USERS TABLE
+  "users_table" => "your_value",
+ // INSERT THE PAGE TO USERS REDIRECT AFTER THE LOGOUT
+  "logout_link" => "index.php",
+];
+
+?>
+
+<?php
 
 // DATABASE
 try {
