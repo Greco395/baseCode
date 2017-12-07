@@ -27,6 +27,10 @@ $settings = [
   "users_table" => "your_value",
  // INSERT THE PAGE TO USERS REDIRECT AFTER THE LOGOUT
   "logout_link" => "index.php",
+
+  /* 
+      --> END EDIT ZONE <--
+  */
 ];
 
 ?>
@@ -34,15 +38,17 @@ $settings = [
 <?php
 
 // DATABASE
-try {
-    $dbh = new PDO('mysql:host='.$settings['db_host'].';dbname='.$settings['db_name']'', $settings['db_user'], $settings['db_pass']);
-    foreach($dbh->query('SELECT * from FOO') as $row) {
-        print_r($row);
-    }
-    $dbh = null;
-} catch (PDOException $e) {
-    print "Error!: " . $e->getMessage() . "<br/>";
-    die();
+if($settings['db_host'] != "your_value"){
+ try {
+     $dbh = new PDO('mysql:host='.$settings['db_host'].';dbname='.$settings['db_name'].'', $settings['db_user'], $settings['db_pass']);
+     foreach($dbh->query('SELECT * from FOO') as $row) {
+         print_r($row);
+     }
+     $dbh = null;
+ } catch (PDOException $e) {
+     print "Error!: " . $e->getMessage() . "<br/>";
+     die();
+ }
 }
 
 // UNIVERSAL REDIRECT [ result = REDIRECT ]
