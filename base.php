@@ -1,7 +1,7 @@
 <?
 
 /*
-   PHP baseCode by Greco395 ( http://kinguser.me )
+   PHP baseCode by Greco395 ( https://greco395.it )
 */
 
 session_start();
