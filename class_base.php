@@ -1,11 +1,15 @@
 <?
 
-/*
-   PHP baseCode by Greco395 ( https://greco395.it )
+//////////////////////////////////////////////////////////
+//                                                      //
+//   PHP baseCode by Greco395 ( https://greco395.it )   //
+//                                                      //
+//////////////////////////////////////////////////////////
+
+/* 
+   --> change where your_value is written to make everything work <--
 */
- /* 
-      --> change where your_value is written to make everything work <--
-  */
+
 define("CONFIG", array(
     'DB' => array(
         "HOST" => "your_value",
