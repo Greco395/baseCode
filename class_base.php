@@ -142,11 +142,11 @@ class REGISTER{
      $password = $_GET[$conf_typer_regpass_name];
     }
     return array("username" => "".$username."",
-                 "email" => "".$email."", 
+                 "email" => "".$email."",
                  "password" => "".$password.""
                );
   }
-	
+
   public function alert($type, $text){
       if($type == "success"){
           return "<div class=\"alert alert-success\"><strong>Success!</strong><br>".$text."</div>";
@@ -265,6 +265,22 @@ class CAPTCHA{
     return $result;
     }
 }
+
+class HTML{
+  public function redirect($url){
+    if (!headers_sent()){
+        header('Location: '.$url);
+        exit;
+      }else{
+        echo '<script type="text/javascript">';
+        echo 'window.location.href="'.$url.'";';
+        echo '</script>';
+        echo '<noscript>';
+        echo '<meta http-equiv="refresh" content="0;url='.$url.'" />';
+        echo '</noscript>'; exit;
+    }
+  }
+}
 $set_config = new ACCESS;
 $set_config->bootstrapCDN(CONFIG['MISC']['USE_BOOTSTRAPcdn']);
 
@@ -277,7 +293,7 @@ if($_GET['case'] == "login"){
   if($captcha->check == 1){
     $login = new ACCESS;
     $login->login();
-    echo $login->newLogin();  
+    echo $login->newLogin();
   }else{
     echo "invalid captcha";
   }
