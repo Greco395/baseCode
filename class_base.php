@@ -237,12 +237,12 @@ class REGISTER{
 }
 
 class CAPTCHA{
-    public function getCaptcha(){
+    public function get(){
         $public_key = CONFIG['CAPTCHA']['PUBLIC_KEY'];
         return '<div class="g-recaptcha" data-sitekey="'.$public_key.'"></div>';
     }
 
-    public function checkcaptcha($g_recaptcha_response){
+    public function check($g_recaptcha_response){
     if(isset($g_recaptcha_response)){
         $private_key = CONFIG['CAPTCHA']['PRIVATE_KEY'];
         $url       = 'https://www.google.com/recaptcha/api/siteverify';
@@ -273,10 +273,14 @@ $set_config->bootstrapCDN(CONFIG['MISC']['USE_BOOTSTRAPcdn']);
 <?
 include("class_base.php");
 if($_GET['case'] == "login"){
+  $captcha = new CAPTCHA;
+  if($captcha->check == 1){
     $login = new ACCESS;
     $login->login();
-    echo $login->newLogin();
-
+    echo $login->newLogin();  
+  }else{
+    echo "invalid captcha";
+  }
 }elseif($_GET['case'] == "logout"){
     $login = new ACCESS;
     echo $login->logout();
