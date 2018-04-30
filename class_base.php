@@ -28,14 +28,14 @@ define("CONFIG", array(
         "LOGIN_EMAIL_NAME"   => "email", // input name="?"
         "LOGIN_PASSW_NAME"   => "password", // input name="?"
 
-        "REGISTRATION_METHOD" => "POST", // GET or POST
+        "REGISTRATION_METHOD"        => "POST", // GET or POST
         "REGISTRATION_USERNAME_NAME" => "username", // input name="?"
-        "REGISTRATION_EMAIL_NAME" => "email", // input name="?"
+        "REGISTRATION_EMAIL_NAME"    => "email", // input name="?"
         "REGISTRATION_PASSWORD_NAME" => "password", // input name="?"
-        "REGISTRATION_REG_IP" => TRUE, // get the users ip address
-        "PASSWORD_ENCR_MT"   => "php", // php or md5
+        "REGISTRATION_REG_IP"        => TRUE, // get the users ip address
+        "PASSWORD_ENCR_MT"           => "php", // php or md5
 
-        "USE_BOOTSTRAPcdn"   => "false" // true or false
+        "USE_BOOTSTRAPcdn"   => false // true or false
     )
 ));
 // CONNESSIONE AL DATABASE
@@ -119,7 +119,7 @@ class ACCESS{
     }
 
     public function bootstrapCDN($a){
-        if($a == "true"){
+        if($a == true){
             echo "<head><link href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css\" rel=\"stylesheet\" integrity=\"sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4\" crossorigin=\"anonymous\"></head>";
         }
     }
@@ -145,6 +145,14 @@ class REGISTER{
                  "email" => "".$email."", 
                  "password" => "".$password.""
                );
+  }
+	
+  public function alert($type, $text){
+      if($type == "success"){
+          return "<div class=\"alert alert-success\"><strong>Success!</strong><br>".$text."</div>";
+      }elseif($type == "error"){
+          return "<div class=\"alert alert-danger\"><strong>Error!</strong><br>".$text."</div>";
+      }
   }
 
   public function get_ip(){
