@@ -142,13 +142,13 @@ $set_config->bootstrapCDN(CONFIG['MISC']['USE_BOOTSTRAPcdn']);
 
 class CAPTCHA{
     public function getCaptcha(){
-        $public_key = CONFIG['CAPTCHA']['PUBLIC_KEY']
+        $public_key = CONFIG['CAPTCHA']['PUBLIC_KEY'];
         return '<div class="g-recaptcha" data-sitekey="'.$public_key.'"></div>';
     }
 
     public function checkcaptcha($g_recaptcha_response){
     if(isset($g_recaptcha_response)){
-        $private_key = CONFIG['CAPTCHA']['PRIVATE_KEY']
+        $private_key = CONFIG['CAPTCHA']['PRIVATE_KEY'];
         $url       = 'https://www.google.com/recaptcha/api/siteverify';
         $data      =  array(
             'secret'   => $private_key,
