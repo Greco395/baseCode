@@ -33,11 +33,25 @@ define("CONFIG", array(
         "REGISTRATION_EMAIL_NAME"    => "email", // input name="?"
         "REGISTRATION_PASSWORD_NAME" => "password", // input name="?"
         "REGISTRATION_REG_IP"        => TRUE, // get the users ip address
-        "PASSWORD_ENCR_MT"           => "php", // php or md5
+        "PASSWORD_ENCR_MT"           => "php", // php or none ( none is not raccomantated  to real use)
 
         "USE_BOOTSTRAPcdn"   => false // true or false
+    ),
+    'MESSAGES' => array(
+      // login messages
+      "LOGIN_WRONG_PASSWORD"     => "Password Errata",
+      "LOGIN_INESISTENT_ACCOUNT" => "THIS ACCOUNT NOT EXIST",
+
+      // signup messages
+      "REGISTRATION_EMPTY_USERNAME"             => "Please insert an valid Username!",
+      "REGISTRATION_ACCOUNT_ALREADY_REGISTERED" => "This Username/Email is already registered!\nTry another or if you already registered check your email to confirm the account!",
+      "REGISTRATION_PASSWORD_SHORT"             => "The password must be 6 characters long or more!",
+      "REGISTRATION_INVALID_EMAIL"              => "Invalid Email!",
+      "REGISTRATION_ACCOUNT_CREATED"            => "Your account was successfully created.",
+
     )
 ));
+
 // CONNESSIONE AL DATABASE
 if(CONFIG['DB']['HOST'] != "your_value"){
  try {
@@ -78,7 +92,7 @@ class ACCESS{
             $stmt->execute(array($email));
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
             if($rows[0] == null){
-                return $this->alert("error", "THIS ACCOUNT NOT EXIST");
+                return $this->alert("error", CONFIG['MESSAGES']['LOGIN_INESISTENT_ACCOUNT']);
             }
             if(password_verify($password,$rows[0]['password'])){
                 session_start();
@@ -91,7 +105,7 @@ class ACCESS{
 		            return header("Location: ".CONFIG['LINKS']['AFTER_LOGIN']."");
 		        }
             }else{
-                return $this->alert("error", "Password Errata");
+                return $this->alert("error", CONFIG['MESSAGES']['LOGIN_WRONG_PASSWORD']);
             }
         }
     }
@@ -128,19 +142,14 @@ class ACCESS{
 class REGISTER{
 
   public function getVar(){
-    $conf_typer_regtype = CONFIG['MISC']['REGISTRATION_METHOD'];
-    $conf_typer_reguser_name = CONFIG['MISC']['REGISTRATION_USERNAME_NAME'];
-    $conf_typer_regemail_name = CONFIG['MISC']['REGISTRATION_EMAIL_NAME'];
-    $conf_typer_regpass_name = CONFIG['MISC']['REGISTRATION_PASSWORD_NAME'];
-    if($conf_typer_regtype == "POST"){
-     $username = $_POST[$conf_typer_reguser_name];
-     $email = $_POST[$conf_typer_regemail_name];
-     $password = $_POST[$conf_typer_regpass_name];
-    }elseif($conf_typer_regtype == "GET"){
-     $username = $_GET[$conf_typer_reguser_name];
-     $email = $_GET[$conf_typer_regemail_name];
-     $password = $_GET[$conf_typer_regpass_name];
+    if(CONFIG['MISC']['REGISTRATION_METHOD'] == "POST"){
+      $method = $_POST;
+    }elseif(CONFIG['MISC']['REGISTRATION_METHOD'] == "GET"){
+      $method = $_GET;
     }
+    $username = $method[CONFIG['MISC']['REGISTRATION_USERNAME_NAME']];
+    $email = $method[CONFIG['MISC']['REGISTRATION_EMAIL_NAME']];
+    $password = $method[CONFIG['MISC']['REGISTRATION_PASSWORD_NAME']];
     return array("username" => "".$username."",
                  "email" => "".$email."",
                  "password" => "".$password.""
@@ -171,8 +180,8 @@ class REGISTER{
       case "php":
                  $hashed_password = password_hash($password, PASSWORD_DEFAULT);
       break;
-      case "md5":
-                 $hashed_password = md5($password);
+      case "none":
+                 $hashed_password = $password;
       break;
     }
     return $hashed_password;
@@ -204,14 +213,14 @@ class REGISTER{
 
   public function validate($username, $email, $password){
     if(empty($username)){
-        return $this->alert("error", "Please insert an valid Username!");
+        return $this->alert("error", CONFIG['MESSAGES']['REGISTRATION_EMPTY_USERNAME']);
     }
     if($this->already_registered($email, $username)){
-        return $this->alert("error", "This Username/Email is already registered!\nTry another or if you already registered check your email to confirm the account!");
+        return $this->alert("error", CONFIG['MESSAGES']['REGISTRATION_ACCOUNT_ALREADY_REGISTERED']);
     } else if (strlen($password) < 6){
-        return $this->alert("error", "The password must be 6 characters long or more!");
+        return $this->alert("error", CONFIG['MESSAGES']['REGISTRATION_PASSWORD_SHORT']);
     } else if (!filter_var($email, FILTER_VALIDATE_EMAIL)){
-        return $this->alert("error", "Invalid Email.");
+        return $this->alert("error", CONFIG['MESSAGES']['REGISTRATION_INVALID_EMAIL']);
     } else {
         return true;
     }
@@ -230,7 +239,7 @@ class REGISTER{
       $date = time();
       $stmt = $db->prepare("INSERT INTO ".CONFIG['DB']['USERS_TABLE']." (id, username, email, password, ip, rank, date) VALUES (NULL, ?, ?, ?, ?, ?, ?);");
       $stmt->execute(array($this->getVar()['username'], $this->getVar()['email'], $hashed_password, $ip, '0', $date));
-      return true;
+      return $this->alert("success", CONFIG['MESSAGES']['REGISTRATION_ACCOUNT_CREATED']);
     }
   }
 
