@@ -41,6 +41,7 @@ define("CONFIG", array(
       // login messages
       "LOGIN_WRONG_PASSWORD"     => "Password Errata",
       "LOGIN_INESISTENT_ACCOUNT" => "THIS ACCOUNT NOT EXIST",
+      "LOGIN_SUCCESS"            => "Logged in successfully",
 
       // signup messages
       "REGISTRATION_EMPTY_USERNAME"             => "Please insert an valid Username!",
@@ -67,7 +68,7 @@ class ACCESS{
 
     public function login(){
         if(!isset($_SESSION)){ session_start(); }
-        $_SESSION['logged_in']=0;
+        $_SESSION['logged_in']=false;
     }
 
     public function newLogin(){
@@ -96,21 +97,21 @@ class ACCESS{
             }
             if(password_verify($password,$rows[0]['password'])){
                 session_start();
-                $_SESSION['logged_in'] = "1";
+                $_SESSION['logged_in'] = true;
                 $_SESSION['id']        = $rows[0]['id'];
-		        $_SESSION['email']     = $rows[0]['email'];
-		        if(CONFIG['LINKS']['AFTER_LOGIN'] == "NULL"){
-		            return $this->alert("success", "Logged in");
-		        }else{
-		            return header("Location: ".CONFIG['LINKS']['AFTER_LOGIN']."");
-		        }
+		            $_SESSION['email']     = $rows[0]['email'];
+		            if(CONFIG['LINKS']['AFTER_LOGIN'] == "NULL"){
+		                return $this->alert("success", CONFIG['MESSAGES']['LOGIN_SUCCESS']);
+		            }else{
+		                return header("Location: ".CONFIG['LINKS']['AFTER_LOGIN']."");
+		            }
             }else{
-                return $this->alert("error", CONFIG['MESSAGES']['LOGIN_WRONG_PASSWORD']);
+              return $this->alert("error", CONFIG['MESSAGES']['LOGIN_WRONG_PASSWORD']);
             }
         }
     }
     public function isLogged(){
-        if($_SESSION['user_login_session']){
+        if($_SESSION['logged_in'] === true){
             return true;
         }else{
             return false;
@@ -142,10 +143,10 @@ class ACCESS{
 class REGISTER{
 
   public function getVar(){
-    if(CONFIG['MISC']['REGISTRATION_METHOD'] == "POST"){
-      $method = $_POST;
-    }elseif(CONFIG['MISC']['REGISTRATION_METHOD'] == "GET"){
+    if(CONFIG['MISC']['REGISTRATION_METHOD'] == "GET"){
       $method = $_GET;
+    }else{
+      $method = $_POST;
     }
     $username = $method[CONFIG['MISC']['REGISTRATION_USERNAME_NAME']];
     $email = $method[CONFIG['MISC']['REGISTRATION_EMAIL_NAME']];
