@@ -24,35 +24,32 @@ define("CONFIG", array(
         "AFTER_LOGIN" => "NULL" // pagename.ext or NULL
     ),
     'MISC' => array(
-        "LOGIN_METHOD"       => "POST",   // GET or POST
+        "LOGIN_METHOD"       => "POST",   // GET or POST ( raccomantated: POST )
         "LOGIN_EMAIL_NAME"   => "email", // input name="?"
         "LOGIN_PASSW_NAME"   => "password", // input name="?"
-
-        "REGISTRATION_METHOD"        => "POST", // GET or POST
+	    
+        "REGISTRATION_METHOD"        => "POST", // GET or POST ( raccomantated: POST )
         "REGISTRATION_USERNAME_NAME" => "username", // input name="?"
         "REGISTRATION_EMAIL_NAME"    => "email", // input name="?"
         "REGISTRATION_PASSWORD_NAME" => "password", // input name="?"
-        "REGISTRATION_REG_IP"        => TRUE, // get the users ip address
+        "REGISTRATION_REG_IP"        => TRUE, // get the users ip address ( true or false )
         "PASSWORD_ENCR_MT"           => "php", // php or none ( none is not raccomantated  to real use)
-
-        "USE_BOOTSTRAPcdn"   => false // true or false
+	    
+        "USE_BOOTSTRAPcdn"   => true // true or false
     ),
     'MESSAGES' => array(
       // login messages
       "LOGIN_WRONG_PASSWORD"     => "Password Errata",
       "LOGIN_INESISTENT_ACCOUNT" => "THIS ACCOUNT NOT EXIST",
       "LOGIN_SUCCESS"            => "Logged in successfully",
-
       // signup messages
       "REGISTRATION_EMPTY_USERNAME"             => "Please insert an valid Username!",
       "REGISTRATION_ACCOUNT_ALREADY_REGISTERED" => "This Username/Email is already registered!\nTry another or if you already registered check your email to confirm the account!",
       "REGISTRATION_PASSWORD_SHORT"             => "The password must be 6 characters long or more!",
       "REGISTRATION_INVALID_EMAIL"              => "Invalid Email!",
       "REGISTRATION_ACCOUNT_CREATED"            => "Your account was successfully created.",
-
     )
 ));
-
 // CONNESSIONE AL DATABASE
 if(CONFIG['DB']['HOST'] != "your_value"){
  try {
@@ -64,13 +61,12 @@ if(CONFIG['DB']['HOST'] != "your_value"){
 }else{
     die("PERFAVORE COMPILA LA CONFIGURAZIONE");
 }
-class ACCESS{
 
+class ACCESS{
     public function login(){
         if(!isset($_SESSION)){ session_start(); }
         $_SESSION['logged_in']=false;
     }
-
     public function newLogin(){
         global $dbh;
         if((CONFIG['DB']['USERS_TABLE']) == "your_value"){
@@ -117,22 +113,21 @@ class ACCESS{
             return false;
         }
     }
-
     public function logout(){
         unset($_SESSION['logged_in']);
         unset($_SESSION['id']);
         unset($_SESSION['email']);
         header("Location: ".CONFIG['LINKS']['LOGOUT']."");
     }
-
     public function alert($type, $text){
         if($type == "success"){
             return "<div class=\"alert alert-success\"><strong>Success!</strong><br>".$text."</div>";
         }elseif($type == "error"){
             return "<div class=\"alert alert-danger\"><strong>Error!</strong><br>".$text."</div>";
+        }else{
+            return $text;
         }
     }
-
     public function bootstrapCDN($a){
         if($a == true){
             echo "<head><link href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css\" rel=\"stylesheet\" integrity=\"sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4\" crossorigin=\"anonymous\"></head>";
@@ -141,30 +136,15 @@ class ACCESS{
 }
 
 class REGISTER{
-
-  public function getVar(){
-    if(CONFIG['MISC']['REGISTRATION_METHOD'] == "GET"){
-      $method = $_GET;
-    }else{
-      $method = $_POST;
-    }
-    $username = $method[CONFIG['MISC']['REGISTRATION_USERNAME_NAME']];
-    $email = $method[CONFIG['MISC']['REGISTRATION_EMAIL_NAME']];
-    $password = $method[CONFIG['MISC']['REGISTRATION_PASSWORD_NAME']];
-    return array("username" => "".$username."",
-                 "email" => "".$email."",
-                 "password" => "".$password.""
-               );
-  }
-
   public function alert($type, $text){
       if($type == "success"){
           return "<div class=\"alert alert-success\"><strong>Success!</strong><br>".$text."</div>";
       }elseif($type == "error"){
           return "<div class=\"alert alert-danger\"><strong>Error!</strong><br>".$text."</div>";
+      }else{
+          return $text;
       }
   }
-
   public function get_ip(){
     if(!empty($_SERVER['HTTP_CLIENT_IP'])){
       $ip = $_SERVER['HTTP_CLIENT_IP'];
@@ -175,7 +155,6 @@ class REGISTER{
     }
     return $ip;
   }
-
   public function password_crypt($password){
     switch(CONFIG['MISC']['PASSWORD_ENCR_MT']){
       case "php":
@@ -187,7 +166,6 @@ class REGISTER{
     }
     return $hashed_password;
   }
-
   public function already_registered($email, $username){
     global $dbh;
     $stmt = $dbh->prepare("SELECT * FROM ".CONFIG['DB']['USERS_TABLE']." WHERE email=? OR username=?");
@@ -199,7 +177,6 @@ class REGISTER{
         return false;
     }
   }
-
   public function already_registered_ip($ip){
     global $dbh;
     $stmt = $dbh->prepare("SELECT * FROM ".CONFIG['DB']['USERS_TABLE']." WHERE ip=?");
@@ -211,7 +188,6 @@ class REGISTER{
         return false;
     }
   }
-
   public function validate($username, $email, $password){
     if(empty($username)){
         return $this->alert("error", CONFIG['MESSAGES']['REGISTRATION_EMPTY_USERNAME']);
@@ -222,12 +198,19 @@ class REGISTER{
         return $this->alert("error", CONFIG['MESSAGES']['REGISTRATION_PASSWORD_SHORT']);
     } else if (!filter_var($email, FILTER_VALIDATE_EMAIL)){
         return $this->alert("error", CONFIG['MESSAGES']['REGISTRATION_INVALID_EMAIL']);
-    } else {
-        return true;
     }
+    return true;
   }
-
-  public function newMember($username, $email, $password){
+  public function newMember(){
+    if(CONFIG['MISC']['REGISTRATION_METHOD'] == "GET"){
+      $method = $_GET;
+    }else{
+      $method = $_POST;
+    }
+    $username = $method[CONFIG['MISC']['REGISTRATION_USERNAME_NAME']];
+    $email    = $method[CONFIG['MISC']['REGISTRATION_EMAIL_NAME']];
+    $password = $method[CONFIG['MISC']['REGISTRATION_PASSWORD_NAME']];
+    
     if($this->validate($username, $email, $password) === true){
       global $dbh;
       $conf_typer_reggetip = CONFIG['MISC']['REGISTRATION_REG_IP'];
@@ -236,14 +219,15 @@ class REGISTER{
       }else{
         $ip = "disabled";
       }
-      $hashed_password = $this->password_crypt($this->getVar()['password']);
+      $hashed_password = $this->password_crypt($password);
       $date = time();
-      $stmt = $db->prepare("INSERT INTO ".CONFIG['DB']['USERS_TABLE']." (id, username, email, password, ip, rank, date) VALUES (NULL, ?, ?, ?, ?, ?, ?);");
-      $stmt->execute(array($this->getVar()['username'], $this->getVar()['email'], $hashed_password, $ip, '0', $date));
+      $stmt = $dbh->prepare("INSERT INTO ".CONFIG['DB']['USERS_TABLE']." (id, username, email, password, ip, rank, date) VALUES (NULL, ?, ?, ?, ?, ?, ?);");
+      $stmt->execute(array($username, $email, $hashed_password, $ip, '0', $date));
       return $this->alert("success", CONFIG['MESSAGES']['REGISTRATION_ACCOUNT_CREATED']);
+    }else{
+        return $this->validate($username, $email, $password);
     }
   }
-
 }
 
 class CAPTCHA{
@@ -251,7 +235,6 @@ class CAPTCHA{
         $public_key = CONFIG['CAPTCHA']['PUBLIC_KEY'];
         return '<div class="g-recaptcha" data-sitekey="'.$public_key.'"></div>';
     }
-
     public function check($g_recaptcha_response){
     if(isset($g_recaptcha_response)){
         $private_key = CONFIG['CAPTCHA']['PRIVATE_KEY'];
@@ -291,26 +274,57 @@ class HTML{
     }
   }
 }
+
+class CONFIGURATION{
+    public function createUsersTable($table_name){
+        global $dbh;
+        if(!isset($table_name)){
+            if(CONFIG['DB']['USERS_TABLE'] == "your_value"){
+                die("invalid table name");
+            }else{
+                $table_name = CONFIG['DB']['USERS_TABLE'];
+            }
+        }
+        $sql ="CREATE TABLE `".CONFIG['DB']['NAME']."`.`".$table_name."` ( `id` INT(11) NOT NULL AUTO_INCREMENT , `username` VARCHAR(256) NULL DEFAULT NULL , `email` VARCHAR(256) NULL DEFAULT NULL , `password` VARCHAR(256) NULL DEFAULT NULL , `ip` VARCHAR(256) NULL DEFAULT NULL , `rank` VARCHAR(256) NULL DEFAULT '0' , `date` VARCHAR(256) NULL DEFAULT NULL , PRIMARY KEY (`id`)) ENGINE = InnoDB;" ;
+        $dbh->exec($sql);
+        return "Users table created with name: ".$table_name;
+    }
+}
 $set_config = new ACCESS;
 $set_config->bootstrapCDN(CONFIG['MISC']['USE_BOOTSTRAPcdn']);
 
 
-/*        EXAMPLE login
-<?
+/*        EXAMPLE USAGES
+
 include("class_base.php");
-if($_GET['case'] == "login"){
-  $captcha = new CAPTCHA;
+
+//////// create a new users table //////////////
+
+$config = new CONFIGURATION;
+echo $config->createUsersTable("users");
+
+///////////////////////////////////////////////
+/////////// simple login example //////////////
+
+$login = new ACCESS;
+$login->login();
+echo $login->newLogin();
+
+///////////////////////////////////////////////
+////////// simple registration example ////////
+
+$signup = new REGISTER;
+echo $signup->newMember();
+
+///////////////////////////////////////////////
+///////// simple captcha check example ///////
+
+$captcha = new CAPTCHA;
   if($captcha->check == 1){
-    $login = new ACCESS;
-    $login->login();
-    echo $login->newLogin();
-  }else{
-    echo "invalid captcha";
+     // your code here
   }
-}elseif($_GET['case'] == "logout"){
-    $login = new ACCESS;
-    echo $login->logout();
-}
-?>
+
+///////////////////////////////////////////////
+
 */
 ?>
