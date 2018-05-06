@@ -22,7 +22,7 @@ define("CONFIG", array(
     'LINKS' => array(
         "LOGOUT"      => "index.php",
         "AFTER_LOGIN" => "NULL", // pagename.ext or NULL
-        "ACCOUNT_CONFIRM" => "your_value" // example: http://your_domain.com/account-confirm.php
+        "ACCOUNT_CONFIRM" => "your_value" // example: http://your_domain.com/account-confirm.php ( this link will be sent via email with the token to the user to activate his account )
     ),
     'MISC' => array(
         "LOGIN_METHOD"       => "POST",   // [ GET or POST ] ( raccomantated: POST )
