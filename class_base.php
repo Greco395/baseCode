@@ -35,7 +35,7 @@ define("CONFIG", array(
         "REGISTRATION_PASSWORD_NAME" => "password", // input name="?"
         "REGISTRATION_REG_IP"        => TRUE, // [ true or false ] save the users ip address whe create a new account
         "PASSWORD_ENCR_MT"           => "php", // [ php or none ] ( none is not raccomantated  to real use)
-        "USE_EMAIL_CONFIRMATION"     => TRUE, // [ true or false ] send an email to activate the new account ( use the page: email_template-basecode.php )
+        "USE_EMAIL_CONFIRMATION"     => TRUE, // [ true or false ] send an email to activate the new account ( use the page: email_basecode.php )
         "DEFAULT_ACCOUNT_ACTIVATION" => FALSE, // [ true or false]
         
         "USE_BOOTSTRAPcdn"   => TRUE // true or false
@@ -247,7 +247,7 @@ class REGISTER{
 class MAIL{
     public function AccountActivation($to, $username, $token){
         $link_to_activate = CONFIG['LINKS']['ACCOUNT_CONFIRM'];
-        include("email_template-basecode.php");
+        include("email_basecode.php");
     }
 }
 
