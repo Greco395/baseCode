@@ -13,7 +13,7 @@ define("CONFIG", array(
         "NAME" => "your_value",
         "USER" => "your_value",
         "PASS" => "your_value",
-        "USERS_TABLE" => "your_value"
+        "USERS_TABLE" => "users"
     ),
     'CAPTCHA' => array(
         "PUBLIC_KEY"  => "your_value",
@@ -21,21 +21,24 @@ define("CONFIG", array(
     ),
     'LINKS' => array(
         "LOGOUT"      => "index.php",
-        "AFTER_LOGIN" => "NULL" // pagename.ext or NULL
+        "AFTER_LOGIN" => "NULL", // pagename.ext or NULL
+        "ACCOUNT_CONFIRM" => "your_value" // example: http://your_domain.com/account-confirm.php
     ),
     'MISC' => array(
-        "LOGIN_METHOD"       => "POST",   // GET or POST ( raccomantated: POST )
+        "LOGIN_METHOD"       => "POST",   // [ GET or POST ] ( raccomantated: POST )
         "LOGIN_EMAIL_NAME"   => "email", // input name="?"
         "LOGIN_PASSW_NAME"   => "password", // input name="?"
-	    
-        "REGISTRATION_METHOD"        => "POST", // GET or POST ( raccomantated: POST )
+        
+        "REGISTRATION_METHOD"        => "POST", // [ GET or POST ] ( raccomantated: POST )
         "REGISTRATION_USERNAME_NAME" => "username", // input name="?"
         "REGISTRATION_EMAIL_NAME"    => "email", // input name="?"
         "REGISTRATION_PASSWORD_NAME" => "password", // input name="?"
-        "REGISTRATION_REG_IP"        => TRUE, // get the users ip address ( true or false )
-        "PASSWORD_ENCR_MT"           => "php", // php or none ( none is not raccomantated  to real use)
-	    
-        "USE_BOOTSTRAPcdn"   => true // true or false
+        "REGISTRATION_REG_IP"        => TRUE, // [ true or false ] save the users ip address whe create a new account
+        "PASSWORD_ENCR_MT"           => "php", // [ php or none ] ( none is not raccomantated  to real use)
+        "USE_EMAIL_CONFIRMATION"     => TRUE, // [ true or false ] send an email to activate the new account ( use the page: email_template-basecode.php )
+        "DEFAULT_ACCOUNT_ACTIVATION" => FALSE, // [ true or false]
+        
+        "USE_BOOTSTRAPcdn"   => TRUE // true or false
     ),
     'MESSAGES' => array(
       // login messages
@@ -50,6 +53,7 @@ define("CONFIG", array(
       "REGISTRATION_ACCOUNT_CREATED"            => "Your account was successfully created.",
     )
 ));
+
 // CONNESSIONE AL DATABASE
 if(CONFIG['DB']['HOST'] != "your_value"){
  try {
@@ -126,11 +130,6 @@ class ACCESS{
             return "<div class=\"alert alert-danger\"><strong>Error!</strong><br>".$text."</div>";
         }else{
             return $text;
-        }
-    }
-    public function bootstrapCDN($a){
-        if($a == true){
-            echo "<head><link href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css\" rel=\"stylesheet\" integrity=\"sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4\" crossorigin=\"anonymous\"></head>";
         }
     }
 }
@@ -219,15 +218,37 @@ class REGISTER{
       }else{
         $ip = "disabled";
       }
+      $token = "".bin2hex(random_bytes(16))."".time()."";
       $hashed_password = $this->password_crypt($password);
       $date = time();
-      $stmt = $dbh->prepare("INSERT INTO ".CONFIG['DB']['USERS_TABLE']." (id, username, email, password, ip, rank, date) VALUES (NULL, ?, ?, ?, ?, ?, ?);");
-      $stmt->execute(array($username, $email, $hashed_password, $ip, '0', $date));
-      return $this->alert("success", CONFIG['MESSAGES']['REGISTRATION_ACCOUNT_CREATED']);
+      if(CONFIG['MISC']['USE_EMAIL_CONFIRMATION'] == true){
+          $stmt = $dbh->prepare("INSERT INTO ".CONFIG['DB']['USERS_TABLE']." (id, username, email, password, ip, rank, date, email_token, status) VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?);");
+          $stmt->execute(array($username, $email, $hashed_password, $ip, '0', $date, $token, '0'));
+          $mail = new MAIL;
+          $mail->AccountActivation($email, $username, $token);
+          return $this->alert("success", CONFIG['MESSAGES']['REGISTRATION_ACCOUNT_CREATED']);
+      }else{
+          if(CONFIG['MISC']['DEFAULT_ACCOUNT_ACTIVATION'] == true){
+              $stmt = $dbh->prepare("INSERT INTO ".CONFIG['DB']['USERS_TABLE']." (id, username, email, password, ip, rank, date, email_token, status) VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?);");
+              $stmt->execute(array($username, $email, $hashed_password, $ip, '0', $date, $token, '1'));
+              return $this->alert("success", CONFIG['MESSAGES']['REGISTRATION_ACCOUNT_CREATED']);
+          }else{
+              $stmt = $dbh->prepare("INSERT INTO ".CONFIG['DB']['USERS_TABLE']." (id, username, email, password, ip, rank, date, email_token, status) VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?);");
+              $stmt->execute(array($username, $email, $hashed_password, $ip, '0', $date, $token, '0'));
+              return $this->alert("success", CONFIG['MESSAGES']['REGISTRATION_ACCOUNT_CREATED']);
+          }
+      }
     }else{
         return $this->validate($username, $email, $password);
     }
   }
+}
+
+class MAIL{
+    public function AccountActivation($to, $username, $token){
+        $link_to_activate = CONFIG['LINKS']['ACCOUNT_CONFIRM'];
+        include("email_template-basecode.php");
+    }
 }
 
 class CAPTCHA{
@@ -273,6 +294,11 @@ class HTML{
         echo '</noscript>'; exit;
     }
   }
+  public function bootstrapCDN($a){
+        if($a == true){
+            echo "<head><link href=\"https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css\" rel=\"stylesheet\" integrity=\"sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4\" crossorigin=\"anonymous\"></head>";
+        }
+    }
 }
 
 class CONFIGURATION{
@@ -285,19 +311,72 @@ class CONFIGURATION{
                 $table_name = CONFIG['DB']['USERS_TABLE'];
             }
         }
-        $sql ="CREATE TABLE `".CONFIG['DB']['NAME']."`.`".$table_name."` ( `id` INT(11) NOT NULL AUTO_INCREMENT , `username` VARCHAR(256) NULL DEFAULT NULL , `email` VARCHAR(256) NULL DEFAULT NULL , `password` VARCHAR(256) NULL DEFAULT NULL , `ip` VARCHAR(256) NULL DEFAULT NULL , `rank` VARCHAR(256) NULL DEFAULT '0' , `date` VARCHAR(256) NULL DEFAULT NULL , PRIMARY KEY (`id`)) ENGINE = InnoDB;" ;
+        $sql ="CREATE TABLE `".CONFIG['DB']['NAME']."`.`".$table_name."` ( `id` INT(11) NOT NULL AUTO_INCREMENT , 
+                                                                           `username` VARCHAR(256) NULL DEFAULT NULL ,
+                                                                           `email` VARCHAR(256) NULL DEFAULT NULL , 
+                                                                           `password` VARCHAR(256) NULL DEFAULT NULL , 
+                                                                           `ip` VARCHAR(256) NULL DEFAULT NULL , 
+                                                                           `rank` VARCHAR(256) NULL DEFAULT '0' , 
+                                                                           `date` VARCHAR(256) NULL DEFAULT NULL , 
+                                                                           `email_token` VARCHAR(256) NULL DEFAULT NULL ,
+                                                                           `status` VARCHAR(256) NULL DEFAULT '0' , 
+                                                                           PRIMARY KEY (`id`)) ENGINE = InnoDB;" ;
         $dbh->exec($sql);
         return "Users table created with name: ".$table_name;
     }
 }
-$set_config = new ACCESS;
+
+class ACCOUNT{
+    // CONFIG['MISC']['USE_EMAIL_CONFIRMATION']
+    public function ActivateAccount($token){
+        global $dbh;
+      $user = $this->getUserByEmailToken($token);
+      if(is_null($user)){
+          return "INVALID CODE";
+      }
+      if($user['email_token'] == $token){
+          $stmt = $dbh->prepare("UPDATE ".CONFIG['DB']['USERS_TABLE']." SET status = ? WHERE email_token = ? ");
+          $stmt->execute(array(1, $token));
+	      return 1;
+      }else{
+          return 0;
+      }
+  }
+  public function getUserByName($name){
+	global $dbh;
+    $stmt = $dbh->prepare("SELECT * FROM ".CONFIG['DB']['USERS_TABLE']." WHERE username = ?");
+    $stmt->execute(array($name));
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+	return $rows[0];
+  }
+  public function getUserByEmail($email){
+	  global $dbh;
+      $stmt = $dbh->prepare("SELECT * FROM ".CONFIG['DB']['USERS_TABLE']." WHERE email = ?");
+      $stmt->execute(array($email));
+      $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+	  return $rows[0];
+  }
+  public function getUserByEmailToken($token){
+	  global $dbh;
+      $stmt = $dbh->prepare("SELECT * FROM ".CONFIG['DB']['USERS_TABLE']." WHERE email_token = ?");
+      $stmt->execute(array($token));
+      $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+	  return $rows[0];
+  }
+}
+$set_config = new HTML;
 $set_config->bootstrapCDN(CONFIG['MISC']['USE_BOOTSTRAPcdn']);
 
 
-/*        EXAMPLE USAGES
+/*        EXAMPLE USAGE
+
+/////////// include the basecode ///////////////
 
 include("class_base.php");
+// OR
+// require_once("class_base.php");
 
+////////////////////////////////////////////////
 //////// create a new users table //////////////
 
 $config = new CONFIGURATION;
@@ -317,12 +396,26 @@ $signup = new REGISTER;
 echo $signup->newMember();
 
 ///////////////////////////////////////////////
-///////// simple captcha check example ///////
+///////// simple captcha check example ////////
 
 $captcha = new CAPTCHA;
   if($captcha->check == 1){
      // your code here
   }
+
+///////////////////////////////////////////////
+/////////// simple account activation /////////
+
+$activate = new ACCOUNT;
+echo $activate->ActivateAccount($token);
+
+///////////////////////////////////////////////
+///////// simple get account information //////
+
+$info = new ACCOUNT;
+echo $info->getUserByName($username)['rank'];
+echo $info->getUserByEmail($email)['username'];
+echo $info->getUserByEmailToken($token)['password'];
 
 ///////////////////////////////////////////////
 
