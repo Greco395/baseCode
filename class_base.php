@@ -215,7 +215,7 @@ class REGISTER{
     if($this->validate($username, $email, $password) === true){
       if(CONFIG['MISC']['PERMIT_MULTIPLE_IP_REGISTRATION'] === true){
 	      if($this->already_registered_ip($this->get_ip()) === true){
-		      return CONFIG['MESSAGES']['REGISTRATION_IP_ALREADY_EXIST'];
+		   return $this->alert("error", CONFIG['MESSAGES']['REGISTRATION_IP_ALREADY_EXIST']);
 	      }
       }   
       global $dbh;
