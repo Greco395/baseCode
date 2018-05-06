@@ -37,6 +37,7 @@ define("CONFIG", array(
         "PASSWORD_ENCR_MT"           => "php", // [ php or none ] ( none is not raccomantated  to real use)
         "USE_EMAIL_CONFIRMATION"     => TRUE, // [ true or false ] send an email to activate the new account ( use the page: email_basecode.php )
         "DEFAULT_ACCOUNT_ACTIVATION" => FALSE, // [ true or false]
+	"PERMIT_MULTIPLE_IP_REGISTRATION" => FALSE, // [ true or false ] ( true permit the rigistration of multiple account by an ip address )
         
         "USE_BOOTSTRAPcdn"   => TRUE // true or false
     ),
@@ -51,6 +52,7 @@ define("CONFIG", array(
       "REGISTRATION_PASSWORD_SHORT"             => "The password must be 6 characters long or more!",
       "REGISTRATION_INVALID_EMAIL"              => "Invalid Email!",
       "REGISTRATION_ACCOUNT_CREATED"            => "Your account was successfully created.",
+      "REGISTRATION_IP_ALREADY_EXIST"           => "This IP is already registered!",
     )
 ));
 
@@ -211,6 +213,11 @@ class REGISTER{
     $password = $method[CONFIG['MISC']['REGISTRATION_PASSWORD_NAME']];
     
     if($this->validate($username, $email, $password) === true){
+      if(CONFIG['MISC']['PERMIT_MULTIPLE_IP_REGISTRATION'] === true){
+	      if($this->already_registered_ip($this->get_ip()) === true){
+		      return CONFIG['MESSAGES']['REGISTRATION_IP_ALREADY_EXIST'];
+	      }
+      }   
       global $dbh;
       $conf_typer_reggetip = CONFIG['MISC']['REGISTRATION_REG_IP'];
       if($conf_typer_reggetip == TRUE){
