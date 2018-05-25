@@ -55,4 +55,30 @@ echo $info->getUserByEmailToken($token)['password'];
 
 ///////////////////////////////////////////////
 
+
+
+/* 
+
+     --->  UPDATE 1.0.2 SQL  <---
+               
+*/
+
+////////////// update a table /////////////////
+$sql = new SQL;
+$my_values = array("user_id" => "3", "plan" => "3","time" => time());
+$a = $sql->update($my_values, "table_name", "id=113"); // example, where id=113
+echo $a;
+///////////////////////////////////////////////
+
+///////// insert your value in a table //////
+$sql = new SQL;
+$my_values = array("NULL", "1", "234", "34", "test");
+$a = $sql->insert($my_values, "table_name");
+echo $a;
+///////////////////////////////////////////////
+
+
+
+
+
 ?>
