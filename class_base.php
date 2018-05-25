@@ -28,7 +28,7 @@ define("CONFIG", array(
         "LOGIN_METHOD"       => "POST",   // [ GET or POST ] ( raccomantated: POST )
         "LOGIN_EMAIL_NAME"   => "email", // input name="?"
         "LOGIN_PASSW_NAME"   => "password", // input name="?"
-        
+
         "REGISTRATION_METHOD"        => "POST", // [ GET or POST ] ( raccomantated: POST )
         "REGISTRATION_USERNAME_NAME" => "username", // input name="?"
         "REGISTRATION_EMAIL_NAME"    => "email", // input name="?"
@@ -38,7 +38,7 @@ define("CONFIG", array(
         "USE_EMAIL_CONFIRMATION"     => TRUE, // [ true or false ] send an email to activate the new account ( use the page: email_basecode.php )
         "DEFAULT_ACCOUNT_ACTIVATION" => FALSE, // [ true or false]
 	"PERMIT_MULTIPLE_IP_REGISTRATION" => FALSE, // [ true or false ] ( true permit the rigistration of multiple account by an ip address )
-        
+
         "USE_BOOTSTRAPcdn"   => TRUE // true or false
     ),
     'MESSAGES' => array(
@@ -53,7 +53,8 @@ define("CONFIG", array(
       "REGISTRATION_INVALID_EMAIL"              => "Invalid Email!",
       "REGISTRATION_ACCOUNT_CREATED"            => "Your account was successfully created.",
       "REGISTRATION_IP_ALREADY_EXIST"           => "This IP is already registered!",
-    )
+    ),
+    'VERSION' => '1.0.2'
 ));
 
 // CONNESSIONE AL DATABASE
@@ -211,13 +212,13 @@ class REGISTER{
     $username = $method[CONFIG['MISC']['REGISTRATION_USERNAME_NAME']];
     $email    = $method[CONFIG['MISC']['REGISTRATION_EMAIL_NAME']];
     $password = $method[CONFIG['MISC']['REGISTRATION_PASSWORD_NAME']];
-    
+
     if($this->validate($username, $email, $password) === true){
       if(CONFIG['MISC']['PERMIT_MULTIPLE_IP_REGISTRATION'] === true){
 	      if($this->already_registered_ip($this->get_ip()) === true){
 		   return $this->alert("error", CONFIG['MESSAGES']['REGISTRATION_IP_ALREADY_EXIST']);
 	      }
-      }   
+      }
       global $dbh;
       $conf_typer_reggetip = CONFIG['MISC']['REGISTRATION_REG_IP'];
       if($conf_typer_reggetip == TRUE){
@@ -248,6 +249,61 @@ class REGISTER{
     }else{
         return $this->validate($username, $email, $password);
     }
+  }
+}
+
+class SQL{
+  public function getColumsNum($table_name){
+    global $dbh;
+    $stmt = $dbh->prepare("SELECT * FROM {$table_name}");
+    $stmt->execute();
+    return $stmt->columnCount();
+  }
+  
+  public function getColumsName($table_name){
+    global $dbh;
+    $stmt = $dbh->prepare("SHOW COLUMNS FROM {$table_name}");
+    $stmt->execute();
+    $col = array();
+    while ($row = $stmt->fetch(PDO::FETCH_NUM)){
+        $col[] = "".(string)$row[0].", ";
+    }
+    $res = substr_replace(implode($col), "", -2);
+    return $res;
+  }
+  
+  public function run($sql){
+    global $dbh;
+    $stmt = $dbh->prepare($sql);
+    $stmt->execute();
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    return $rows;
+  }
+
+  public function insert($values_array, $table_name){
+    global $dbh;
+    $nums_of_values = sizeof ( $values_array );
+    $culum_num = $this->getColumsNum($table_name);
+    if($nums_of_values > $culum_num){
+      return "The values entered are MORE than the columns available!";
+    }elseif($nums_of_values < $culum_num){
+      return "The values entered are LESS than the columns available!";
+    }
+    $res = implode(", ", $values_array);
+    $rn = $this->run("INSERT INTO {$table_name} (".$this->getColumsName($table_name).") VALUES (".$res.");");
+    return true;
+  }
+  
+  public function update($array, $table_name, $where){
+      $string="";
+      $callback = 
+      function ($value, $key) use (&$string) {
+          $string .= $key . " = " . $value . ", ";
+      };
+      array_walk_recursive($array, $callback);
+      $res = substr_replace($string, "", -2);
+      $rn = $this->run("UPDATE {$table_name} SET ".$res." WHERE ".$where."");
+      return true;
   }
 }
 
@@ -318,15 +374,15 @@ class CONFIGURATION{
                 $table_name = CONFIG['DB']['USERS_TABLE'];
             }
         }
-        $sql ="CREATE TABLE `".CONFIG['DB']['NAME']."`.`".$table_name."` ( `id` INT(11) NOT NULL AUTO_INCREMENT , 
+        $sql ="CREATE TABLE `".CONFIG['DB']['NAME']."`.`".$table_name."` ( `id` INT(11) NOT NULL AUTO_INCREMENT ,
                                                                            `username` VARCHAR(256) NULL DEFAULT NULL ,
-                                                                           `email` VARCHAR(256) NULL DEFAULT NULL , 
-                                                                           `password` VARCHAR(256) NULL DEFAULT NULL , 
-                                                                           `ip` VARCHAR(256) NULL DEFAULT NULL , 
-                                                                           `rank` VARCHAR(256) NULL DEFAULT '0' , 
-                                                                           `date` VARCHAR(256) NULL DEFAULT NULL , 
+                                                                           `email` VARCHAR(256) NULL DEFAULT NULL ,
+                                                                           `password` VARCHAR(256) NULL DEFAULT NULL ,
+                                                                           `ip` VARCHAR(256) NULL DEFAULT NULL ,
+                                                                           `rank` VARCHAR(256) NULL DEFAULT '0' ,
+                                                                           `date` VARCHAR(256) NULL DEFAULT NULL ,
                                                                            `email_token` VARCHAR(256) NULL DEFAULT NULL ,
-                                                                           `status` VARCHAR(256) NULL DEFAULT '0' , 
+                                                                           `status` VARCHAR(256) NULL DEFAULT '0' ,
                                                                            PRIMARY KEY (`id`)) ENGINE = InnoDB;" ;
         $dbh->exec($sql);
         return "Users table created with name: ".$table_name;
